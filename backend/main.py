@@ -19,3 +19,7 @@ app.include_router(travel.router, prefix="/api/travel")
 @app.get("/")
 def read_root():
     return {"message": "AI Travel Agent API"}
+
+@app.post("/test")
+def test_endpoint():
+    return {"message": "Test endpoint works"}

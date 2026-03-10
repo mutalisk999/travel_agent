@@ -67,9 +67,11 @@ class TravelAgent:
 
         for day_num in range(1, days + 1):
             patterns = [
-                rf"第{day_num}天[：:]\s*(.+?)(?=(?:第{day_num + 1}天)|$)",
-                rf"第{day_num}天[：:]\s*(.+?)(?=(?:第\d+天)|$)",
-                rf"(?:^|\n)\s*第{day_num}天[：:]\s*(.+?)(?=(?:\n\s*第\d+天)|$)",
+                rf"第{day_num}天[：:]?\s*(.+?)(?=(?:第{day_num + 1}天)|$)",
+                rf"第{day_num}天[：:]?\s*(.+?)(?=(?:第\d+天)|$)",
+                rf"(?:^|\n)\s*第{day_num}天[：:]?\s*(.+?)(?=(?:\n\s*第\d+天)|$)",
+                rf"(?:^|\n)\s*D{day_num}[：:]?\s*(.+?)(?=(?:D{day_num + 1})|$)",
+                rf"(?:^|\n)\s*Day {day_num}[：:]?\s*(.+?)(?=(?:Day {day_num + 1})|$)",
             ]
 
             for pattern in patterns:
@@ -77,8 +79,17 @@ class TravelAgent:
                 if match:
                     content = match.group(1).strip()
                     if content:
+                        # 清理markdown符号
+                        content = re.sub(r'\*\*', '', content)
                         daily_itineraries.append(content)
                         break
+
+        # 如果没有找到任何行程，尝试使用整个文本作为第一天的行程
+        if not daily_itineraries and text.strip():
+            content = text.strip()
+            # 清理markdown符号
+            content = re.sub(r'\*\*', '', content)
+            daily_itineraries.append(content)
 
         if len(daily_itineraries) < days:
             daily_itineraries.extend([""] * (days - len(daily_itineraries)))
@@ -88,47 +99,28 @@ class TravelAgent:
     def _parse_hotels(self, hotels_text: str) -> List[Dict[str, str]]:
         """解析酒店推荐文本为结构化数据"""
         hotels = []
-        hotel_blocks = re.split(
-            r"\n\s*(?=(?:\d+[\.、]|酒店\s*\d+|【|\*\s*))", hotels_text
-        )
-
-        for block in hotel_blocks:
+        
+        # 按酒店分隔文本
+        hotel_blocks = re.split(r'酒店名称：', hotels_text)
+        
+        # 跳过第一个空块
+        for block in hotel_blocks[1:]:
             if not block.strip():
                 continue
-
+                
+            # 提取酒店信息
+            name = self._extract_field(block, [r'(.*?)(?:\n|$)'])
+            location = self._extract_field(block, [r'位置：\s*(.+?)(?:\n|$)'])
+            price = self._extract_field(block, [r'价格：\s*(.+?)(?:\n|$)'])
+            features = self._extract_field(block, [r'特色：\s*(.+?)(?:\n|$)'])
+            reason = self._extract_field(block, [r'推荐理由：\s*(.+?)(?:\n|$)'])
+            
             hotel = {
-                "name": self._extract_field(
-                    block,
-                    [
-                        r"酒店名称[：:]\s*(.+?)(?:\n|$)",
-                        r"(?:^|\n)\s*(?:\d+[\.、])?\s*([^\n]+?酒店[^\n]*)",
-                        r"(?:^|\n)\s*(?:\d+[\.、])?\s*([^\n]{2,20})(?:\n|$)",
-                    ],
-                ),
-                "location": self._extract_field(
-                    block,
-                    [
-                        r"位置[：:]\s*(.+?)(?:\n|$)",
-                        r"酒店位置[：:]\s*(.+?)(?:\n|$)",
-                        r"靠近[：:]?\s*(.+?)(?:\n|$)",
-                    ],
-                ),
-                "price": self._extract_field(
-                    block,
-                    [
-                        r"价格[：:]\s*(.+?)(?:\n|$)",
-                        r"价格区间[：:]\s*(.+?)(?:\n|$)",
-                        r"(?:\d{3,4}[-~]\d{3,4}|\d{3,4}元)",
-                    ],
-                ),
-                "features": self._extract_field(
-                    block,
-                    [r"特色[：:]\s*(.+?)(?:\n|$)", r"酒店特色[：:]\s*(.+?)(?:\n|$)"],
-                ),
-                "reason": self._extract_field(
-                    block,
-                    [r"推荐理由[：:]\s*(.+?)(?:\n|$)", r"推荐[：:]\s*(.+?)(?:\n|$)"],
-                ),
+                "name": name,
+                "location": location,
+                "price": price,
+                "features": features,
+                "reason": reason
             }
 
             if not hotel["name"]:
@@ -141,17 +133,67 @@ class TravelAgent:
             hotels.append(hotel)
 
         if not hotels:
+            # 尝试使用旧格式解析
+            hotel_blocks = re.split(
+                r"\n\s*(?=(?:\d+[\.、]|酒店\s*\d+|【|\*\s*))", hotels_text
+            )
+
+            for block in hotel_blocks:
+                if not block.strip():
+                    continue
+
+                hotel = {
+                    "name": self._extract_field(
+                        block,
+                        [
+                            r"酒店名称[：:]\s*(.+?)(?:\n|$)",
+                            r"(?:^|\n)\s*(?:\d+[\.、])?\s*([^\n]+?酒店[^\n]*)",
+                            r"(?:^|\n)\s*(?:\d+[\.、])?\s*([^\n]{2,20})(?:\n|$)",
+                        ],
+                    ),
+                    "location": self._extract_field(
+                        block,
+                        [
+                            r"位置[：:]\s*(.+?)(?:\n|$)",
+                            r"酒店位置[：:]\s*(.+?)(?:\n|$)",
+                            r"靠近[：:]?\s*(.+?)(?:\n|$)",
+                        ],
+                    ),
+                    "price": self._extract_field(
+                        block,
+                        [
+                            r"价格[：:]\s*(.+?)(?:\n|$)",
+                            r"价格区间[：:]\s*(.+?)(?:\n|$)",
+                            r"(?:\d{3,4}[-~]\d{3,4}|\d{3,4}元)",
+                        ],
+                    ),
+                    "features": self._extract_field(
+                        block,
+                        [r"特色[：:]\s*(.+?)(?:\n|$)", r"酒店特色[：:]\s*(.+?)(?:\n|$)"],
+                    ),
+                    "reason": self._extract_field(
+                        block,
+                        [r"推荐理由[：:]\s*(.+?)(?:\n|$)", r"推荐[：:]\s*(.+?)(?:\n|$)"],
+                    ),
+                }
+
+                if not hotel["name"]:
+                    hotel["name"] = (
+                        block.strip()[:30] + "..."
+                        if len(block.strip()) > 30
+                        else block.strip()
+                    )
+
+                hotels.append(hotel)
+
+        if not hotels:
             hotels.append(
                 {
                     "name": "酒店推荐",
-                    "location": "详见下方内容",
+                    "location": "根据行程区域选择",
                     "price": "根据预算选择",
                     "features": "多种选择",
-                    "reason": (
-                        hotels_text[:200] + "..."
-                        if len(hotels_text) > 200
-                        else hotels_text
-                    ),
+                    "reason": "建议提前预订，选择交通便利的酒店",
                 }
             )
 
@@ -169,43 +211,260 @@ class TravelAgent:
 
     def _parse_transportation(self, transport_text: str) -> Dict[str, str]:
         """解析交通建议文本为结构化数据"""
-        return {
-            "to_city": self._extract_field(
+        # 尝试使用新格式解析
+        to_city = self._extract_field(transport_text, [r'到达城市：\s*(.+?)(?:\n|$)'])
+        in_city = self._extract_field(transport_text, [r'城市内交通：\s*(.+?)(?:\n|$)'])
+        between_attractions = self._extract_field(transport_text, [r'景点间交通：\s*(.+?)(?:\n|$)'])
+        cost_estimate = self._extract_field(transport_text, [r'费用估算：\s*(.+?)(?:\n|$)'])
+        
+        # 如果新格式解析失败，尝试使用旧格式
+        if not to_city:
+            to_city = self._extract_field(
                 transport_text,
                 [
                     r"到达.*?交通[：:]\s*(.+?)(?:\n|$)",
                     r"到达.*?方式[：:]\s*(.+?)(?:\n|$)",
                     r"(?:飞机|高铁|火车|自驾).*?(?:\n|$)",
                 ],
-            )
-            or "详见下方建议",
-            "in_city": self._extract_field(
+            ) or "详见下方建议"
+        
+        if not in_city:
+            in_city = self._extract_field(
                 transport_text,
                 [
                     r"城市内.*?交通[：:]\s*(.+?)(?:\n|$)",
                     r"市内.*?交通[：:]\s*(.+?)(?:\n|$)",
                     r"(?:地铁|公交|打车|出租车).*?(?:\n|$)",
                 ],
-            )
-            or "详见下方建议",
-            "between_attractions": self._extract_field(
+            ) or "详见下方建议"
+        
+        if not between_attractions:
+            between_attractions = self._extract_field(
                 transport_text,
                 [
                     r"景点.*?交通[：:]\s*(.+?)(?:\n|$)",
                     r"各景点.*?交通[：:]\s*(.+?)(?:\n|$)",
                 ],
-            )
-            or "详见下方建议",
-            "cost_estimate": self._extract_field(
+            ) or "详见下方建议"
+        
+        if not cost_estimate:
+            cost_estimate = self._extract_field(
                 transport_text,
                 [
                     r"费用估算[：:]\s*(.+?)(?:\n|$)",
                     r"交通费用[：:]\s*(.+?)(?:\n|$)",
                     r"(?:约|大约)?\s*\d+\s*元",
                 ],
-            )
-            or "根据实际选择",
+            ) or "根据实际选择"
+        
+        return {
+            "to_city": to_city,
+            "in_city": in_city,
+            "between_attractions": between_attractions,
+            "cost_estimate": cost_estimate,
         }
+
+    def _generate_image_urls(self, attractions: List[str]) -> List[str]:
+        """为景点生成图片URL"""
+        image_urls = []
+        # 为每个景点提供多个图片URL，这些图片来自网络
+        attraction_images = {
+            '外滩': [
+                'https://img.freepik.com/free-photo/shanghai-bund-skyline-at-night_1127-3282.jpg',
+                'https://img.freepik.com/free-photo/shanghai-bund-daytime_1127-3379.jpg',
+                'https://img.freepik.com/free-photo/shanghai-bund-historical-buildings_1127-3380.jpg'
+            ],
+            '南京路步行街': [
+                'https://img.freepik.com/free-photo/nanjing-road-shanghai-china_1127-3355.jpg',
+                'https://img.freepik.com/free-photo/nanjing-road-shopping_1127-3381.jpg',
+                'https://img.freepik.com/free-photo/nanjing-road-night_1127-3382.jpg'
+            ],
+            '豫园': [
+                'https://img.freepik.com/free-photo/yuyuan-garden-shanghai_1127-3368.jpg',
+                'https://img.freepik.com/free-photo/yuyuan-garden-traditional_1127-3383.jpg',
+                'https://img.freepik.com/free-photo/yuyuan-garden-pavilion_1127-3384.jpg'
+            ],
+            '人民广场': [
+                'https://img.freepik.com/free-photo/people-square-shanghai_1127-3367.jpg',
+                'https://img.freepik.com/free-photo/people-square-music-hall_1127-3385.jpg',
+                'https://img.freepik.com/free-photo/people-square-fountain_1127-3386.jpg'
+            ],
+            '陆家嘴': [
+                'https://img.freepik.com/free-photo/shanghai-lujiazui-financial-district_1127-3369.jpg',
+                'https://img.freepik.com/free-photo/shanghai-lujiazui-skyline_1127-3387.jpg',
+                'https://img.freepik.com/free-photo/shanghai-lujiazui-night_1127-3388.jpg'
+            ],
+            '东方明珠': [
+                'https://img.freepik.com/free-photo/oriental-pearl-tower-shanghai_1127-3366.jpg',
+                'https://img.freepik.com/free-photo/oriental-pearl-tower-night_1127-3389.jpg',
+                'https://img.freepik.com/free-photo/oriental-pearl-tower-upclose_1127-3390.jpg'
+            ],
+            '故宫': [
+                'https://img.freepik.com/free-photo/forbidden-city-beijing_1127-3370.jpg',
+                'https://img.freepik.com/free-photo/forbidden-city-summer_1127-3391.jpg',
+                'https://img.freepik.com/free-photo/forbidden-city-treasure_1127-3392.jpg'
+            ],
+            '天安门': [
+                'https://img.freepik.com/free-photo/tiananmen-square-beijing_1127-3371.jpg',
+                'https://img.freepik.com/free-photo/tiananmen-flag-raising_1127-3393.jpg',
+                'https://img.freepik.com/free-photo/tiananmen-night_1127-3394.jpg'
+            ],
+            '长城': [
+                'https://img.freepik.com/free-photo/great-wall-china_1127-3372.jpg',
+                'https://img.freepik.com/free-photo/great-wall-mountain_1127-3395.jpg',
+                'https://img.freepik.com/free-photo/great-wall-sunset_1127-3396.jpg'
+            ],
+            '颐和园': [
+                'https://img.freepik.com/free-photo/summer-palace-beijing_1127-3373.jpg',
+                'https://img.freepik.com/free-photo/summer-palace-lake_1127-3397.jpg',
+                'https://img.freepik.com/free-photo/summer-palace-bridge_1127-3398.jpg'
+            ],
+            '广州塔': [
+                'https://img.freepik.com/free-photo/canton-tower-guangzhou_1127-3374.jpg',
+                'https://img.freepik.com/free-photo/canton-tower-night_1127-3399.jpg',
+                'https://img.freepik.com/free-photo/canton-tower-river_1127-3400.jpg'
+            ],
+            '陈家祠': [
+                'https://img.freepik.com/free-photo/chen-family-temple-guangzhou_1127-3375.jpg',
+                'https://img.freepik.com/free-photo/chen-family-temple-details_1127-3401.jpg',
+                'https://img.freepik.com/free-photo/chen-family-temple-courtyard_1127-3402.jpg'
+            ],
+            '世界之窗': [
+                'https://img.freepik.com/free-photo/window-world-shenzhen_1127-3376.jpg',
+                'https://img.freepik.com/free-photo/window-world-landmarks_1127-3403.jpg',
+                'https://img.freepik.com/free-photo/window-world-night_1127-3404.jpg'
+            ],
+            '欢乐谷': [
+                'https://img.freepik.com/free-photo/happy-valley-shenzhen_1127-3377.jpg',
+                'https://img.freepik.com/free-photo/happy-valley-rides_1127-3405.jpg',
+                'https://img.freepik.com/free-photo/happy-valley-parade_1127-3406.jpg'
+            ],
+            '田子坊': [
+                'https://img.freepik.com/free-photo/tianzifang-shanghai_1127-3407.jpg',
+                'https://img.freepik.com/free-photo/tianzifang-alley_1127-3408.jpg',
+                'https://img.freepik.com/free-photo/tianzifang-shops_1127-3409.jpg'
+            ],
+            '新天地': [
+                'https://img.freepik.com/free-photo/xintiandi-shanghai_1127-3410.jpg',
+                'https://img.freepik.com/free-photo/xintiandi-bund_1127-3411.jpg',
+                'https://img.freepik.com/free-photo/xintiandi-night_1127-3412.jpg'
+            ],
+            '上海科技馆': [
+                'https://img.freepik.com/free-photo/shanghai-science-museum_1127-3413.jpg',
+                'https://img.freepik.com/free-photo/shanghai-science-museum-exhibition_1127-3414.jpg',
+                'https://img.freepik.com/free-photo/shanghai-science-museum-planetarium_1127-3415.jpg'
+            ],
+            '南锣鼓巷': [
+                'https://img.freepik.com/free-photo/nanluoguxiang-beijing_1127-3416.jpg',
+                'https://img.freepik.com/free-photo/nanluoguxiang-hutong_1127-3417.jpg',
+                'https://img.freepik.com/free-photo/nanluoguxiang-shops_1127-3418.jpg'
+            ],
+            '什刹海': [
+                'https://img.freepik.com/free-photo/shichahai-beijing_1127-3419.jpg',
+                'https://img.freepik.com/free-photo/shichahai-lake_1127-3420.jpg',
+                'https://img.freepik.com/free-photo/shichahai-winter_1127-3421.jpg'
+            ],
+            '798艺术区': [
+                'https://img.freepik.com/free-photo/798-art-district-beijing_1127-3422.jpg',
+                'https://img.freepik.com/free-photo/798-art-galleries_1127-3423.jpg',
+                'https://img.freepik.com/free-photo/798-art-statues_1127-3424.jpg'
+            ]
+        }
+        
+        import random
+        for attraction in attractions:
+            # 查找景点对应的图片URL列表
+            if attraction in attraction_images:
+                # 随机选择一张图片
+                image_url = random.choice(attraction_images[attraction])
+                image_urls.append(image_url)
+            else:
+                # 如果没有对应的图片，使用默认图片
+                default_images = [
+                    'https://img.freepik.com/free-photo/tourist-attraction_1127-3378.jpg',
+                    'https://img.freepik.com/free-photo/travel-destination_1127-3425.jpg',
+                    'https://img.freepik.com/free-photo/landscape-view_1127-3426.jpg'
+                ]
+                image_url = random.choice(default_images)
+                image_urls.append(image_url)
+        return image_urls[:2]  # 每个景点最多返回2张图片
+
+    def _extract_attractions(self, day_text: str) -> List[str]:
+        """从每日行程中提取景点名称"""
+        # 从文本中提取景点
+        attractions = []
+        
+        # 直接从文本中提取明确的景点名称
+        # 常见的上海景点
+        shanghai_attractions = [
+            '外滩', '南京路步行街', '豫园', '人民广场', '陆家嘴', '东方明珠',
+            '上海博物馆', '上海科技馆', '田子坊', '新天地', '静安寺',
+            '虹口公园', '外白渡桥', '西岸艺术中心', '世纪大道', '沉香阁'
+        ]
+        
+        # 常见的北京景点
+        beijing_attractions = [
+            '故宫', '天安门', '长城', '颐和园', '圆明园', '天坛', '地坛',
+            '北海公园', '景山公园', '恭王府', '雍和宫', '孔庙', '国子监',
+            '八达岭长城', '慕田峪长城', '明十三陵', '798艺术区', '南锣鼓巷',
+            '什刹海', '王府井', '西单', '三里屯', '奥林匹克公园', '鸟巢', '水立方'
+        ]
+        
+        # 常见的广州景点
+        guangzhou_attractions = [
+            '广州塔', '陈家祠', '沙面岛', '上下九步行街', '北京路步行街',
+            '白云山', '越秀公园', '中山纪念堂', '黄埔军校旧址', '长隆欢乐世界'
+        ]
+        
+        # 常见的深圳景点
+        shenzhen_attractions = [
+            '世界之窗', '欢乐谷', '东部华侨城', '深圳湾公园', '红树林',
+            '莲花山公园', '地王大厦', '京基100', '大鹏半岛', '西冲海滩'
+        ]
+        
+        # 合并所有常见景点
+        common_attractions = shanghai_attractions + beijing_attractions + guangzhou_attractions + shenzhen_attractions
+        
+        # 从文本中查找常见景点
+        for attraction in common_attractions:
+            if attraction in day_text:
+                attractions.append(attraction)
+        
+        # 如果没有找到常见景点，尝试使用正则表达式提取
+        if not attractions:
+            # 优先提取明确的景点名称格式
+            patterns = [
+                r'【(.+?)】',  # 中文括号中的景点
+                r'\*\*(.+?)\*\*',  # 加粗的景点
+                r'前往(.+?)(?:，|。|\n|$)',  # 前往后面的景点，直到标点或结束
+                r'游览(.+?)(?:，|。|\n|$)',  # 游览后面的景点，直到标点或结束
+                r'参观(.+?)(?:，|。|\n|$)',  # 参观后面的景点，直到标点或结束
+                r'打卡(.+?)(?:，|。|\n|$)',  # 打卡后面的景点，直到标点或结束
+                r'游玩(.+?)(?:，|。|\n|$)',  # 游玩后面的景点，直到标点或结束
+                r'欣赏(.+?)(?:，|。|\n|$)',  # 欣赏后面的景点，直到标点或结束
+            ]
+            
+            for pattern in patterns:
+                matches = re.findall(pattern, day_text)
+                for match in matches:
+                    # 清理匹配结果
+                    attraction = match.strip()
+                    # 过滤掉太短的字符串、时间信息和常见的非景点词汇
+                    if (
+                        len(attraction) > 2 and 
+                        attraction not in ['上午', '下午', '晚上', '酒店', '餐厅', '地铁站'] and
+                        not re.match(r'\d{1,2}:\d{2}(?:-\d{1,2}:\d{2})?', attraction) and  # 过滤时间格式
+                        not re.match(r'^\d+$', attraction) and  # 过滤纯数字
+                        not any(keyword in attraction for keyword in ['分钟', '小时', '步行', '打车', '地铁', '公交', '核心区域', '观景台', '路程', '距离', '时间', '车程', '拍照', '禁用', '夜色', '景色', '风景'])
+                    ):
+                        # 进一步清理，移除括号和其他无关字符
+                        attraction = re.sub(r'[()（）]', '', attraction)
+                        attraction = re.sub(r'\s+', ' ', attraction)
+                        if len(attraction) > 2:
+                            attractions.append(attraction)
+        
+        # 去重并返回前3个景点
+        return list(set(attractions))[:3]
 
     def plan_trip(
         self, user_type: str, city: str, preferences: List[str], budget: int, days: int
@@ -239,20 +498,23 @@ class TravelAgent:
         （以此类推，直到第{days}天）
         
         ===酒店推荐===
-        推荐3-5家合适的酒店，每家酒店包含：
-        - 酒店名称
-        - 位置（靠近哪些景点）
-        - 价格区间
-        - 酒店特色
-        - 推荐理由
+        请详细推荐3-5家合适的酒店，每家酒店必须包含以下信息，并且按照指定格式输出：
+        酒店名称：[酒店名称]
+        位置：[酒店位置，靠近哪些景点，距离市中心的距离]
+        价格：[价格区间，具体到每晚的价格范围]
+        特色：[酒店特色，如设施、服务、风格等]
+        推荐理由：[详细的推荐理由，为什么适合该用户的旅游类型和预算]
         
         ===交通建议===
-        - 到达城市交通（飞机、高铁等）
-        - 城市内交通（地铁、公交、打车等）
-        - 景点间交通安排
-        - 交通费用估算
+        请详细提供以下交通信息，并且按照指定格式输出：
+        到达城市：[详细的到达城市的交通方式，包括航班/车次信息、大概费用、行程时间]
+        城市内交通：[详细的城市内交通方式，包括地铁线路、公交线路、打车费用等]
+        景点间交通：[详细的景点之间的交通安排，包括具体的交通方式、时间、费用]
+        费用估算：[详细的交通费用估算，包括往返交通、城市内交通、景点间交通的总费用]
         
         请确保内容详细实用，符合用户的旅游类型和预算。
+        请严格按照指定格式输出，以便于解析。
+        请提供尽可能详细的信息，不要使用模糊的描述。
         """
 
         # 只调用一次LLM
@@ -269,6 +531,14 @@ class TravelAgent:
 
         # 解析每日行程
         daily_itineraries = self._parse_daily_itinerary(itinerary_text, days)
+
+        # 为每日行程添加景点信息，不包含图片
+        itinerary_with_images = []
+        for i, activities in enumerate(daily_itineraries):
+            itinerary_with_images.append({
+                "day": i + 1,
+                "activities": activities
+            })
 
         hotels = (
             self._parse_hotels(hotels_text)
@@ -296,17 +566,7 @@ class TravelAgent:
         )
 
         return {
-            "itinerary": [
-                {
-                    "day": i + 1,
-                    "activities": (
-                        daily_itineraries[i]
-                        if i < len(daily_itineraries)
-                        else "暂无内容"
-                    ),
-                }
-                for i in range(days)
-            ],
+            "itinerary": itinerary_with_images,
             "hotels": hotels,
             "transportation": transportation,
         }
@@ -316,9 +576,13 @@ class TravelAgent:
         patterns = [
             rf"===?{section_name}===?\s*\n?(.*?)(?====?|$)",
             rf"{section_name}[：:]\s*\n?(.*?)(?=\n\s*(?:===?|\w+[：:]|$))",
+            rf"(?:^|\n)\s*{section_name}[：:]?\s*\n?(.*?)(?=\n\s*(?:===?|\w+[：:]|$))",
+            rf"(?:^|\n)\s*【{section_name}】\s*\n?(.*?)(?=\n\s*(?:===?|\w+[：:]|$))",
         ]
         for pattern in patterns:
             match = re.search(pattern, text, re.DOTALL | re.IGNORECASE)
             if match:
-                return match.group(1).strip()
+                content = match.group(1).strip()
+                if content:
+                    return content
         return ""
