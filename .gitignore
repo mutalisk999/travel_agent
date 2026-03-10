@@ -21,11 +21,6 @@ wheels/
 *.egg
 MANIFEST
 
-# Pipenv
-Pipfile
-Pipfile.lock
-pipenv-*.txt
-
 # Virtual environments
 .env
 .venv
