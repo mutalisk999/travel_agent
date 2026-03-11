@@ -489,6 +489,30 @@ class TravelAgent:
     def plan_trip(
         self, user_type: str, departure_city: str, city: str, preferences: List[str], budget: int, days: int
     ) -> Dict[str, Any]:
+        # 检查是否包含自驾偏好
+        is_self_drive = any(pref in preferences for pref in ['自驾', '自驾游', '自驾环线'])
+        
+        # 根据是否自驾，构建不同的交通安排提示
+        if is_self_drive:
+            transportation_prompt = f"""
+        1. **交通安排**：用户选择自驾游，从{departure_city}自驾前往{city}，包括：
+           - 自驾路线规划（高速公路、国道等）
+           - 预计行驶距离和时间
+           - 油费、过路费等费用估算
+           - 城市内和景点间的停车安排
+           - **特别注意**：往返自驾费用必须包含在人均总预算{budget}元内
+           - 不需要安排火车、高铁或飞机等公共交通方式"""
+            day1_transport = f"- 上午：从{departure_city}自驾出发前往{city}，沿[具体路线]行驶，预计[行驶时间]"
+        else:
+            transportation_prompt = f"""
+        1. **交通安排**：需要规划从{departure_city}到{city}的往返交通，包括：
+           - 去程交通方式（飞机、高铁、火车等）
+           - 返程交通方式
+           - 具体的车次/航班信息、时间、费用
+           - 城市内和景点间的交通安排
+           - **特别注意**：往返交通费用必须包含在人均总预算{budget}元内"""
+            day1_transport = f"- 上午：从{departure_city}出发，乘坐[具体交通方式]前往{city}"
+        
         # 构建统一的提示词，一次调用获取所有信息
         combined_prompt = f"""
         你是一位专业的旅游规划师，请为以下用户制定完整的旅游计划。
@@ -502,12 +526,7 @@ class TravelAgent:
         - 天数：{days}天
         
         **重要提示：请特别考虑以下因素：**
-        1. **交通安排**：需要规划从{departure_city}到{city}的往返交通，包括：
-           - 去程交通方式（飞机、高铁、火车、汽车等）
-           - 返程交通方式
-           - 具体的车次/航班信息、时间、费用
-           - 城市内和景点间的交通安排
-           - **特别注意**：往返交通费用必须包含在人均总预算{budget}元内
+        {transportation_prompt}
         
         2. **预算分配**：人均总预算{budget}元需要合理分配：
            - 往返交通费用（从{departure_city}到{city}的往返）
@@ -529,7 +548,7 @@ class TravelAgent:
         请为每一天生成详细的行程安排，格式如下：
         
         第1天（从{departure_city}出发）：
-        - 上午：从{departure_city}出发，乘坐[具体交通方式]前往{city}
+        {day1_transport}
         - 下午：抵达{city}，办理入住，熟悉周边环境
         - 晚上：入住酒店（酒店名称：[酒店名称]，位置：[酒店位置]，价格：[价格]元/晚）
         
