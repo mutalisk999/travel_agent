@@ -11,7 +11,7 @@ class TravelRequest(BaseModel):
     preferences: List[str]  # 喜好，如：自然风光，海边赶海，历史人文景观，民俗风土人情
     budget: int  # 预算
     days: int  # 旅游天数
-    model: str = Field(default="DeepSeek-R1-0528-Qwen3-8B")  # LLM模型名称
+    model: str = Field(default="GLM-5")  # LLM模型名称
 
 class TravelResponse(BaseModel):
     itinerary: List[Dict]  # 每日行程
@@ -38,7 +38,7 @@ def plan_trip(request: TravelRequest):
                 model = member
                 break
         if model is None:
-            model = LLMModel.MiniMax_M2_5
+            model = LLMModel.DeepSeek_R1_0528_Qwen3_8B
         logger.info(f"Selected model: {model}")
         agent = TravelAgent(model=model)
         result = agent.plan_trip(
