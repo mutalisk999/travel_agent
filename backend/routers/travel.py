@@ -12,7 +12,7 @@ class TravelRequest(BaseModel):
     preferences: List[str]  # 喜好，如：自然风光，海边赶海，历史人文景观，民俗风土人情
     budget: int  # 预算
     days: int  # 旅游天数
-    model: str = Field(default="KAT-Coder-Pro-V1")  # LLM模型名称
+    model: str = Field(default="MiniMax-M2.5")  # LLM模型名称
 
 class TravelResponse(BaseModel):
     itinerary: List[Dict]  # 每日行程

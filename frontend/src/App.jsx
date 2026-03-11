@@ -589,19 +589,19 @@ function App() {
 
         {result && !loading && (
           <Paper elevation={3} style={{ padding: '2rem', background: 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)' }}>
-            <Typography variant="h5" gutterBottom style={{ color: theme.palette.primary.dark, fontWeight: 'bold' }}>
+            <Typography variant="h5" gutterBottom>
               您的个性化旅游计划
             </Typography>
             
             {/* 行程安排 */}
-            <Typography variant="h6" style={{ color: theme.palette.primary.main, marginTop: '1rem', marginBottom: '0.5rem' }}>
+            <Typography variant="h6" style={{ marginTop: '1rem', marginBottom: '0.5rem' }}>
               行程安排
             </Typography>
             <Paper elevation={1} style={{ padding: '1rem', backgroundColor: 'white', marginBottom: '1rem' }}>
               {result.itinerary && Array.isArray(result.itinerary) && result.itinerary.length > 0 ? (
                 result.itinerary.map((day, index) => (
                   <div key={index} style={{ marginBottom: '1rem' }}>
-                    <Typography variant="subtitle1" style={{ fontWeight: '600', color: theme.palette.primary.dark }}>
+                    <Typography variant="subtitle1" style={{ fontWeight: 'bold' }}>
                       第{day?.day || index + 1}天
                     </Typography>
                     {day?.activities && Array.isArray(day.activities) && day.activities.length > 0 ? (
@@ -615,24 +615,24 @@ function App() {
                         ))}
                       </ul>
                     ) : (
-                      <Typography variant="body2" color="textSecondary">暂无活动安排</Typography>
+                      <Typography variant="body2" color="text.secondary">暂无活动安排</Typography>
                     )}
                   </div>
                 ))
               ) : (
-                <Typography variant="body2" color="textSecondary">暂无行程安排</Typography>
+                <Typography variant="body2" color="text.secondary">暂无行程安排</Typography>
               )}
             </Paper>
             
             {/* 酒店推荐 */}
-            <Typography variant="h6" style={{ color: theme.palette.primary.main, marginTop: '1rem', marginBottom: '0.5rem' }}>
+            <Typography variant="h6" style={{ marginTop: '1rem', marginBottom: '0.5rem' }}>
               酒店推荐
             </Typography>
             <Paper elevation={1} style={{ padding: '1rem', backgroundColor: 'white', marginBottom: '1rem' }}>
               {result.hotels && Array.isArray(result.hotels) && result.hotels.length > 0 ? (
                 result.hotels.map((hotel, index) => (
                   <div key={index} style={{ marginBottom: '1rem', paddingBottom: '1rem', borderBottom: index < result.hotels.length - 1 ? '1px solid #e0e0e0' : 'none' }}>
-                    <Typography variant="subtitle2" style={{ fontWeight: '600' }}>{hotel?.name || '酒店名称'}</Typography>
+                    <Typography variant="subtitle2" style={{ fontWeight: 'bold' }}>{hotel?.name || '酒店名称'}</Typography>
                     <Typography variant="body2">位置：{hotel?.location || '暂无位置信息'}</Typography>
                     <Typography variant="body2">价格：{hotel?.price || '暂无价格信息'}</Typography>
                     <Typography variant="body2">特色：{hotel?.features || '暂无特色信息'}</Typography>
@@ -640,12 +640,12 @@ function App() {
                   </div>
                 ))
               ) : (
-                <Typography variant="body2" color="textSecondary">暂无酒店推荐</Typography>
+                <Typography variant="body2" color="text.secondary">暂无酒店推荐</Typography>
               )}
             </Paper>
             
             {/* 交通建议 */}
-            <Typography variant="h6" style={{ color: theme.palette.primary.main, marginTop: '1rem', marginBottom: '0.5rem' }}>
+            <Typography variant="h6" style={{ marginTop: '1rem', marginBottom: '0.5rem' }}>
               交通建议
             </Typography>
             <Paper elevation={1} style={{ padding: '1rem', backgroundColor: 'white' }}>
@@ -654,7 +654,7 @@ function App() {
                   {cleanMarkdown(result.transportation || '暂无交通建议详情')}
                 </ReactMarkdown>
               ) : (
-                <Typography variant="body2" color="textSecondary">暂无交通建议</Typography>
+                <Typography variant="body2" color="text.secondary">暂无交通建议</Typography>
               )}
             </Paper>
           </Paper>

@@ -37,9 +37,14 @@ class LLMModel(Enum):
     Qwen3_235B_A22B = "Qwen3-235B-A22B"
     Qwen3_32B_FP8 = "Qwen3-32B-FP8"
     Qwen3_30B_A3B_FP8 = "Qwen3-30B-A3B-FP8"
+    Qwen3_Reranker_8B = "Qwen3-Reranker-8B"
 
     Qwen2_5_72B_Instruct = "Qwen2.5-72B-Instruct"
     Qwen2_5_72B_Instruct_128K = "Qwen2.5-72B-Instruct-128K"
+
+    BAAI_bge_m3 = "BAAI/bge-m3"
+    bge_reranker_v2_m3 = "BAAI/bge-reranker-v2-m3"
+    
 
 
 class TravelAgent:
