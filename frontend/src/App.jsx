@@ -305,7 +305,7 @@ function App() {
     <ThemeProvider theme={theme}>
       <Container maxWidth="md" style={{ marginTop: '2rem' }}>
         <Typography variant="h4" align="center" gutterBottom style={{ color: theme.palette.primary.main, fontWeight: 'bold' }}>
-          旅游助手AI版【Demo】
+          懒人旅游助手AI版【Demo】
         </Typography>
         
         <Paper elevation={3} style={{ padding: '2rem', marginBottom: '2rem', background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)' }}>

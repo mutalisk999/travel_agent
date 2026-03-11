@@ -38,7 +38,7 @@ def plan_trip(request: TravelRequest):
                 model = member
                 break
         if model is None:
-            model = LLMModel.DeepSeek_R1_0528_Qwen3_8B
+            model = LLMModel.MiniMax_M2_5
         logger.info(f"Selected model: {model}")
         agent = TravelAgent(model=model)
         result = agent.plan_trip(
