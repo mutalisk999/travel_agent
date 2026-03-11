@@ -63,7 +63,7 @@ class TravelAgent:
             "messages": [{"role": "user", "content": prompt}],
             "stream": False,
         }
-        response = requests.post(self.api_url, headers=headers, json=data, timeout=300)
+        response = requests.post(self.api_url, headers=headers, json=data, timeout=600)
         return response.json()["choices"][0]["message"]["content"]
 
     def _parse_daily_itinerary(self, text: str, days: int) -> List[str]:
@@ -214,8 +214,8 @@ class TravelAgent:
                 )
         return ""
 
-    def _parse_transportation(self, transport_text: str) -> Dict[str, str]:
-        """解析交通建议文本为结构化数据"""
+    def _parse_transportation(self, transport_text: str) -> str:
+        """解析交通建议文本为格式化文本"""
         # 尝试使用新格式解析
         to_city = self._extract_field(transport_text, [r'到达城市：\s*(.+?)(?:\n|$)'])
         in_city = self._extract_field(transport_text, [r'城市内交通：\s*(.+?)(?:\n|$)'])
@@ -262,12 +262,27 @@ class TravelAgent:
                 ],
             ) or "根据实际选择"
         
-        return {
-            "to_city": to_city,
-            "in_city": in_city,
-            "between_attractions": between_attractions,
-            "cost_estimate": cost_estimate,
-        }
+        # 格式化为文本
+        formatted_text = "往返交通建议：\n"
+        if to_city and to_city != "详见下方建议":
+            formatted_text += f"- {to_city}\n"
+        else:
+            formatted_text += "- 根据出发地选择飞机或高铁\n"
+        
+        formatted_text += "\n市内交通建议：\n"
+        if in_city and in_city != "详见下方建议":
+            formatted_text += f"- {in_city}\n"
+        else:
+            formatted_text += "- 地铁+公交+打车结合\n"
+        
+        if between_attractions and between_attractions != "详见下方建议":
+            formatted_text += f"- {between_attractions}\n"
+        else:
+            formatted_text += "- 根据景点位置选择最优路线\n"
+        
+        formatted_text += f"\n交通费用估算：\n- 约{cost_estimate}\n"
+        
+        return formatted_text
 
     def _generate_image_urls(self, attractions: List[str]) -> List[str]:
         """为景点生成图片URL"""
@@ -521,7 +536,12 @@ class TravelAgent:
         第2天：
         - 上午：...
         - 下午：...
-        - 晚上：...
+        - 晚上：入住酒店（酒店名称：[酒店名称]，位置：[酒店位置]，价格：[价格]元/晚）
+        
+        （以此类推，直到第{days}天）
+        
+        **重要：在每天行程的晚上部分，请插入当天入住的酒店信息，格式为：**
+        - 晚上：入住酒店（酒店名称：[酒店名称]，位置：[酒店位置]，价格：[价格]元/晚）
         
         第{days}天（返回{departure_city}）：
         - 上午：...
@@ -637,12 +657,15 @@ class TravelAgent:
         transportation = (
             self._parse_transportation(transport_text)
             if transport_text
-            else {
-                "to_city": "根据出发地选择飞机或高铁",
-                "in_city": "地铁+公交+打车结合",
-                "between_attractions": "根据景点位置选择最优路线",
-                "cost_estimate": f"约{budget//5}元",
-            }
+            else """往返交通建议：
+- 根据出发地选择飞机或高铁
+
+市内交通建议：
+- 地铁+公交+打车结合
+- 根据景点位置选择最优路线
+
+交通费用估算：
+- 约 budget//5 元"""
         )
 
         return {

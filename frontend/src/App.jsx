@@ -316,6 +316,11 @@ function App() {
   const cleanMarkdown = (text) => {
     if (!text) return '暂无内容';
     
+    // 确保传入的是字符串
+    if (typeof text !== 'string') {
+      text = String(text);
+    }
+    
     let cleaned = text;
     
     // 移除多余的换行和空格
@@ -599,29 +604,50 @@ function App() {
             </Typography>
             <Paper elevation={1} style={{ padding: '1rem', backgroundColor: 'white', marginBottom: '1rem' }}>
               {result.itinerary && Array.isArray(result.itinerary) && result.itinerary.length > 0 ? (
-                result.itinerary.map((day, index) => (
-                  <div key={index} style={{ marginBottom: '1rem' }}>
-                    <Typography variant="subtitle1" style={{ fontWeight: 'bold' }}>
-                      第{day?.day || index + 1}天
-                    </Typography>
-                    {day?.activities && Array.isArray(day.activities) && day.activities.length > 0 ? (
-                      <ul style={{ margin: 0, paddingLeft: '1.5rem' }}>
-                        {day.activities.map((activity, activityIndex) => (
-                          <li key={activityIndex}>
-                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                              {cleanMarkdown(activity || '暂无活动详情')}
-                            </ReactMarkdown>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <Typography variant="body2" color="text.secondary">暂无活动安排</Typography>
-                    )}
-                  </div>
-                ))
-              ) : (
-                <Typography variant="body2" color="text.secondary">暂无行程安排</Typography>
-              )}
+                  result.itinerary.map((day, index) => {
+                    console.log('Day data:', day);
+                    console.log('Activities:', day?.activities);
+                    console.log('Is activities array?', Array.isArray(day?.activities));
+                    return (
+                      <div key={index} style={{ marginBottom: '1rem' }}>
+                        <Typography variant="subtitle1" style={{ fontWeight: 'bold' }}>
+                          第{day?.day || index + 1}天
+                        </Typography>
+                        {day?.activities ? (
+                          <div>
+                            {typeof day.activities === 'string' ? (
+                              <ul style={{ margin: 0, paddingLeft: '1.5rem' }}>
+                                {day.activities.split('\n').filter(line => line.trim()).map((line, lineIndex) => (
+                                  <li key={lineIndex}>
+                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                      {cleanMarkdown(line.trim() || '暂无活动详情')}
+                                    </ReactMarkdown>
+                                  </li>
+                                ))}
+                              </ul>
+                            ) : Array.isArray(day.activities) && day.activities.length > 0 ? (
+                              <ul style={{ margin: 0, paddingLeft: '1.5rem' }}>
+                                {day.activities.map((activity, activityIndex) => (
+                                  <li key={activityIndex}>
+                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                      {cleanMarkdown(activity || '暂无活动详情')}
+                                    </ReactMarkdown>
+                                  </li>
+                                ))}
+                              </ul>
+                            ) : (
+                              <Typography variant="body2" style={{ color: '#666' }}>暂无活动安排</Typography>
+                            )}
+                          </div>
+                        ) : (
+                          <Typography variant="body2" style={{ color: '#666' }}>暂无活动安排</Typography>
+                        )}
+                      </div>
+                    );
+                  })
+                ) : (
+                  <Typography variant="body2" style={{ color: '#666' }}>暂无行程安排</Typography>
+                )}
             </Paper>
             
             {/* 酒店推荐 */}
@@ -640,7 +666,7 @@ function App() {
                   </div>
                 ))
               ) : (
-                <Typography variant="body2" color="text.secondary">暂无酒店推荐</Typography>
+                <Typography variant="body2" style={{ color: '#666' }}>暂无酒店推荐</Typography>
               )}
             </Paper>
             
@@ -650,11 +676,13 @@ function App() {
             </Typography>
             <Paper elevation={1} style={{ padding: '1rem', backgroundColor: 'white' }}>
               {result.transportation ? (
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                  {cleanMarkdown(result.transportation || '暂无交通建议详情')}
-                </ReactMarkdown>
+                <div>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {cleanMarkdown(result.transportation || '暂无交通建议详情')}
+                  </ReactMarkdown>
+                </div>
               ) : (
-                <Typography variant="body2" color="text.secondary">暂无交通建议</Typography>
+                <Typography variant="body2" style={{ color: '#666' }}>暂无交通建议</Typography>
               )}
             </Paper>
           </Paper>
