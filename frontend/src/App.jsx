@@ -349,7 +349,7 @@ function App() {
 
   return (
     <ThemeProvider theme={theme}>
-      <Container maxWidth="md" style={{ marginTop: '2rem' }}>
+      <Container maxWidth="md" style={{ marginTop: '2rem', maxWidth: '100%', paddingLeft: '1rem', paddingRight: '1rem' }}>
         <Typography variant="h4" align="center" gutterBottom>
           懒人旅游助手AI版【Demo】
         </Typography>
@@ -360,7 +360,7 @@ function App() {
             <Box mb={2}>
               <Typography variant="subtitle1" style={{ marginBottom: '8px' }}>出发地</Typography>
               <Grid container spacing={2}>
-                <Grid item xs={6}>
+                <Grid item xs={6} style={{ display: 'flex', alignItems: 'flex-start' }}>
                   <FormControl fullWidth sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}>
                     <Typography variant="body2" style={{ marginBottom: '4px' }}>出发省份</Typography>
                     <Select
@@ -383,7 +383,7 @@ function App() {
                     </Select>
                   </FormControl>
                 </Grid>
-                <Grid item xs={6}>
+                <Grid item xs={6} style={{ display: 'flex', alignItems: 'flex-start' }}>
                   <FormControl fullWidth sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}>
                     <Typography variant="body2" style={{ marginBottom: '4px' }}>出发城市</Typography>
                     <Select
@@ -412,7 +412,7 @@ function App() {
             <Box mb={2}>
               <Typography variant="subtitle1" style={{ marginBottom: '8px' }}>目的地</Typography>
               <Grid container spacing={2}>
-                <Grid item xs={6}>
+                <Grid item xs={6} style={{ display: 'flex', alignItems: 'flex-start' }}>
                   <FormControl fullWidth sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}>
                     <Typography variant="body2" style={{ marginBottom: '4px' }}>目标省份</Typography>
                     <Select
@@ -426,7 +426,7 @@ function App() {
                     >
                       <MenuItem value="" disabled>
                       请选择目标省份
-                    </MenuItem>
+                      </MenuItem>
                       {provinceOptions.map(option => (
                         <MenuItem key={option} value={option}>
                           {option}
@@ -435,7 +435,7 @@ function App() {
                     </Select>
                   </FormControl>
                 </Grid>
-                <Grid item xs={6}>
+                <Grid item xs={6} style={{ display: 'flex', alignItems: 'flex-start' }}>
                   <FormControl fullWidth sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}>
                     <Typography variant="body2" style={{ marginBottom: '4px' }}>目标城市</Typography>
                     <Select
@@ -448,8 +448,8 @@ function App() {
                       sx={{ backgroundColor: 'white', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}
                     >
                       <MenuItem value="" disabled>
-                      请选择目标城市
-                    </MenuItem>
+                        请选择目标城市
+                      </MenuItem>
                       {formData.province && provinceCityMap[formData.province].map(option => (
                         <MenuItem key={option} value={option}>
                           {option}
@@ -464,8 +464,8 @@ function App() {
             <Box mb={2}>
               <Typography variant="subtitle1" style={{ marginBottom: '8px' }}>行程信息</Typography>
               <Grid container spacing={2}>
-                <Grid item xs={6}>
-                  <FormControl fullWidth>
+                <Grid item xs={6} style={{ display: 'flex', alignItems: 'flex-start' }}>
+                  <FormControl fullWidth style={{ height: '100%' }}>
                     <Typography variant="body2" style={{ marginBottom: '4px' }}>旅游天数</Typography>
                     <TextField
                       name="days"
@@ -477,12 +477,12 @@ function App() {
                       required
                       placeholder="请输入天数"
                       helperText="最多8天"
-                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' }, backgroundColor: 'white', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}
+                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' }, backgroundColor: 'white', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', '& .MuiFormHelperText-root': { minHeight: '1.5rem' } }}
                     />
                   </FormControl>
                 </Grid>
-                <Grid item xs={6}>
-                  <FormControl fullWidth>
+                <Grid item xs={6} style={{ display: 'flex', alignItems: 'flex-start' }}>
+                  <FormControl fullWidth style={{ height: '100%' }}>
                     <Typography variant="body2" style={{ marginBottom: '4px' }}>人均总预算（元）</Typography>
                     <TextField
                       name="budget"
@@ -494,7 +494,7 @@ function App() {
                       required
                       placeholder="请输入预算"
                       helperText="人均总预算不能超过50000元"
-                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' }, backgroundColor: 'white', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}
+                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' }, backgroundColor: 'white', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', '& .MuiFormHelperText-root': { minHeight: '1.5rem' } }}
                     />
                   </FormControl>
                 </Grid>
@@ -528,9 +528,9 @@ function App() {
             <Box mb={2}>
               <Typography variant="subtitle1" style={{ marginBottom: '8px', color: theme.palette.primary.dark, fontWeight: '600' }}>旅游偏好</Typography>
               <div style={{ backgroundColor: 'white', borderRadius: '8px', padding: '1rem', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-                <Grid container spacing={2}>
+                <Grid container spacing={2} justifyContent="flex-start">
                   {preferenceOptions.map((option, index) => (
-                    <Grid item xs={6} sm={4} md={3} key={option}>
+                    <Grid item xs={6} sm={4} md={3} key={option} style={{ display: 'flex', alignItems: 'center' }}>
                       <FormControlLabel
                         control={
                           <Checkbox
@@ -542,6 +542,7 @@ function App() {
                           />
                         }
                         label={option}
+                        style={{ width: '100%', margin: 0 }}
                       />
                     </Grid>
                   ))}
