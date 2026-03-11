@@ -572,46 +572,6 @@ class TravelAgent:
         - 如果预算有限，可以推荐经济型酒店或民宿
         - 确保酒店价格与用户总预算相匹配，考虑交通成本
         
-        ===交通建议===
-        **重要：请详细规划从{departure_city}到{city}的往返交通安排**
-        
-        请详细提供以下交通信息，并且按照指定格式输出：
-        
-        **往返交通安排：**
-        去程：[从{departure_city}到{city}的具体交通方式，包括：
-              - 交通方式（飞机/高铁/火车/汽车等）
-              - 具体的车次/航班号
-              - 出发时间、到达时间
-              - 行程时长
-              - 单程费用]
-        
-        返程：[从{city}返回{departure_city}的具体交通方式，包括：
-              - 交通方式（飞机/高铁/火车/汽车等）
-              - 具体的车次/航班号
-              - 出发时间、到达时间
-              - 行程时长
-              - 单程费用]
-        
-        **城市内交通：**
-        [详细的城市内交通方式，包括：
-         - 主要交通工具（地铁、公交、出租车、网约车等）
-         - 推荐的地铁线路和公交线路
-         - 大概的交通费用估算
-         - 交通卡或优惠信息]
-        
-        **景点间交通：**
-        [详细的景点之间的交通安排，包括：
-         - 具体的交通方式
-         - 行程时间
-         - 大概费用]
-        
-        **总交通费用估算：**
-        [详细的交通费用估算，包括：
-         - 往返交通总费用
-         - 城市内交通总费用
-         - 景点间交通总费用
-         - 交通总费用占预算的比例]
-        
         请确保内容详细实用，符合用户的旅游类型和预算，并充分考虑时间因素对旅游体验的影响。
         请严格按照指定格式输出，以便于解析。
         请提供尽可能详细的信息，不要使用模糊的描述。
@@ -623,7 +583,6 @@ class TravelAgent:
         # 解析响应内容
         itinerary_text = self._extract_section(response, "行程安排")
         hotels_text = self._extract_section(response, "酒店推荐")
-        transport_text = self._extract_section(response, "交通建议")
 
         # 如果没有找到明确的分隔，使用整个响应作为行程
         if not itinerary_text:
@@ -654,24 +613,9 @@ class TravelAgent:
             ]
         )
 
-        transportation = (
-            self._parse_transportation(transport_text)
-            if transport_text
-            else """往返交通建议：
-- 根据出发地选择飞机或高铁
-
-市内交通建议：
-- 地铁+公交+打车结合
-- 根据景点位置选择最优路线
-
-交通费用估算：
-- 约 budget//5 元"""
-        )
-
         return {
             "itinerary": itinerary_with_images,
             "hotels": hotels,
-            "transportation": transportation,
         }
 
     def _extract_section(self, text: str, section_name: str) -> str:

@@ -17,7 +17,6 @@ class TravelRequest(BaseModel):
 class TravelResponse(BaseModel):
     itinerary: List[Dict]  # 每日行程
     hotels: List[Dict]  # 酒店推荐
-    transportation: str  # 交通建议
 
 import logging
 

@@ -609,8 +609,8 @@ function App() {
                     console.log('Activities:', day?.activities);
                     console.log('Is activities array?', Array.isArray(day?.activities));
                     return (
-                      <div key={index} style={{ marginBottom: '1rem' }}>
-                        <Typography variant="subtitle1" style={{ fontWeight: 'bold' }}>
+                      <div key={index} style={{ marginBottom: '2rem', paddingBottom: '1.5rem', borderBottom: index < result.itinerary.length - 1 ? '1px solid #e0e0e0' : 'none' }}>
+                        <Typography variant="h6" style={{ fontWeight: 'bold', marginBottom: '1rem', color: theme.palette.primary.main }}>
                           第{day?.day || index + 1}天
                         </Typography>
                         {day?.activities ? (
@@ -618,7 +618,7 @@ function App() {
                             {typeof day.activities === 'string' ? (
                               <ul style={{ margin: 0, paddingLeft: '1.5rem' }}>
                                 {day.activities.split('\n').filter(line => line.trim()).map((line, lineIndex) => (
-                                  <li key={lineIndex}>
+                                  <li key={lineIndex} style={{ marginBottom: '0.5rem' }}>
                                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                       {cleanMarkdown(line.trim() || '暂无活动详情')}
                                     </ReactMarkdown>
@@ -628,7 +628,7 @@ function App() {
                             ) : Array.isArray(day.activities) && day.activities.length > 0 ? (
                               <ul style={{ margin: 0, paddingLeft: '1.5rem' }}>
                                 {day.activities.map((activity, activityIndex) => (
-                                  <li key={activityIndex}>
+                                  <li key={activityIndex} style={{ marginBottom: '0.5rem' }}>
                                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                       {cleanMarkdown(activity || '暂无活动详情')}
                                     </ReactMarkdown>
@@ -670,21 +670,7 @@ function App() {
               )}
             </Paper>
             
-            {/* 交通建议 */}
-            <Typography variant="h6" style={{ marginTop: '1rem', marginBottom: '0.5rem' }}>
-              交通建议
-            </Typography>
-            <Paper elevation={1} style={{ padding: '1rem', backgroundColor: 'white' }}>
-              {result.transportation ? (
-                <div>
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {cleanMarkdown(result.transportation || '暂无交通建议详情')}
-                  </ReactMarkdown>
-                </div>
-              ) : (
-                <Typography variant="body2" style={{ color: '#666' }}>暂无交通建议</Typography>
-              )}
-            </Paper>
+
           </Paper>
         )}
       </Container>
