@@ -7,6 +7,7 @@ router = APIRouter()
 
 class TravelRequest(BaseModel):
     user_type: str  # 大学生特种兵游，遛娃亲子游，同事团建游，老年人夕阳游
+    departure_city: str  # 出发城市
     city: str  # 旅游城市
     preferences: List[str]  # 喜好，如：自然风光，海边赶海，历史人文景观，民俗风土人情
     budget: int  # 预算
@@ -43,6 +44,7 @@ def plan_trip(request: TravelRequest):
         agent = TravelAgent(model=model)
         result = agent.plan_trip(
             user_type=request.user_type,
+            departure_city=request.departure_city,
             city=request.city,
             preferences=request.preferences,
             budget=request.budget,
