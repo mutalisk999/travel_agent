@@ -238,7 +238,7 @@ function App() {
         budget: parseInt(formData.budget),
         days: parseInt(formData.days)
       };
-      const response = await axios.post('http://localhost:8000/api/travel/plan', requestData, {
+      const response = await axios.post(`${process.env.REACT_APP_API_URL || 'http://localhost:8030'}/api/travel/plan`, requestData, {
         timeout: 600000
       });
       setResult(response.data);
