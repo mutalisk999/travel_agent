@@ -4,6 +4,7 @@ import re
 import os
 from dotenv import load_dotenv
 from enum import Enum
+from datetime import datetime
 
 # 加载环境变量
 load_dotenv()
@@ -65,6 +66,17 @@ class TravelAgent:
         }
         response = requests.post(self.api_url, headers=headers, json=data, timeout=600)
         return response.json()["choices"][0]["message"]["content"]
+
+    def _get_season(self, month: int) -> str:
+        """根据月份获取季节"""
+        if month in [3, 4, 5]:
+            return "春季"
+        elif month in [6, 7, 8]:
+            return "夏季"
+        elif month in [9, 10, 11]:
+            return "秋季"
+        else:  # 12, 1, 2
+            return "冬季"
 
     def _parse_daily_itinerary(self, text: str, days: int) -> List[str]:
         """解析每日行程文本"""
@@ -489,6 +501,11 @@ class TravelAgent:
     def plan_trip(
         self, user_type: str, departure_city: str, city: str, preferences: List[str], budget: int, days: int
     ) -> Dict[str, Any]:
+        # 获取当前时间信息
+        current_date = datetime.now()
+        current_month = current_date.month
+        current_season = self._get_season(current_month)
+        
         # 检查是否包含自驾偏好
         is_self_drive = any(pref in preferences for pref in ['自驾', '自驾游', '自驾环线'])
         
@@ -524,6 +541,7 @@ class TravelAgent:
         - 偏好：{', '.join(preferences)}
         - 人均总预算：{budget}元（包含往返交通费用）
         - 天数：{days}天
+        - 当前时间：{current_date.strftime('%Y年%m月%d日')}（{current_season}）
         
         **重要提示：请特别考虑以下因素：**
         {transportation_prompt}
@@ -536,11 +554,16 @@ class TravelAgent:
            - 确保总费用不超过{budget}元
            - **特别注意**：酒店价格必须符合扣除交通费用后的预算
         
-        3. **时间因素**：
-           - 不同季节的特色活动（如哈尔滨冬天的滑雪和冰雕，夏季的海边度假）
+        3. **时间因素 - 必须根据当前季节推荐合适的旅游项目**：
+           - **当前季节：{current_season}（{current_month}月）**
+           - **春季（3-5月）推荐**：赏花（樱花、桃花、杏花、油菜花）、踏青、户外徒步、亲近自然
+           - **夏季（6-8月）推荐**：海边度假、避暑、水上活动、夜间市集
+           - **秋季（9-11月）推荐**：赏枫叶、赏银杏、采摘水果、秋日摄影
+           - **冬季（12-2月）推荐**：滑雪、冰雕、温泉、冬季美食
            - 节假日和特殊节庆（如春节的花灯、元宵节的灯会、中秋节的赏月）
-           - 季节性美食和特产（如秋季的螃蟹、冬季的火锅）
+           - 季节性美食和特产（如春季的春笋、春季野菜；夏季的海鲜；秋季的螃蟹；冬季的火锅）
            - 天气对行程安排的影响（如雨季的室内活动安排）
+           - **特别强调**：请根据当前时间（{current_season}）推荐合适的旅游项目，不要推荐不符合当前季节的活动（例如：春天不要推荐赏枫叶，秋天不要推荐赏樱花，夏天不要推荐滑雪，冬天不要推荐海边游泳）
         
         请按以下格式输出完整的旅游计划：
         
